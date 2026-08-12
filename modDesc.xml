@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<modDesc descVersion="106">
+    <author>ubuntu811</author>
+    <version>1.0.0.0</version>
+    <title>
+        <en>Sanity Saver</en>
+    </title>
+    <description>
+        <en>Fixed autosave: forces a save every 60 minutes no matter what, but after 45 minutes without a save it starts watching for a ~60s AFK gap and sneaks a save in then instead of interrupting you.</en>
+    </description>
+    <iconFilename>icon_sanity_saver.dds</iconFilename>
+    <multiplayer supported="true" />
+    <extraSourceFiles>
+        <sourceFile filename="SanitySaver.lua" />
+    </extraSourceFiles>
+</modDesc>

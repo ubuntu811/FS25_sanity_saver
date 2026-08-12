@@ -80,6 +80,7 @@ local function onMissionLoaded(mission, node)
         return
     end
     local saver = SanitySaver.new()
+    SanitySaver.instance = saver
     addModEventListener(saver)
     addConsoleCommand("sanitySaverDebugSkipWarmup",
         "Sanity Saver: skip straight past the 45min warmup so the AFK check fires immediately (testing only)",
@@ -87,3 +88,17 @@ local function onMissionLoaded(mission, node)
 end
 
 Mission00.loadMission00Finished = Utils.appendedFunction(Mission00.loadMission00Finished, onMissionLoaded)
+
+-- Fires for ANY completed save, not just ours - a manual pause-menu save
+-- or a quicksave hotkey should reset our timers too, same as if we'd
+-- triggered it ourselves. Registered at file-load time (top level, not
+-- inside onMissionLoaded) because SavegameController is a menu-system
+-- singleton that exists before any mission is loaded - same pattern
+-- FS25_PowerTools uses for its own quicksave feature.
+SavegameController.onSaveComplete = Utils.appendedFunction(SavegameController.onSaveComplete, function(self, errorCode)
+    if SanitySaver.instance ~= nil and errorCode == Savegame.ERROR_OK then
+        SanitySaver.instance.lastSaveTime = g_time
+        SanitySaver.instance.lastActivityTime = g_time
+        Logging.info("[SanitySaver] Detected a completed save (manual or otherwise) - timers reset.")
+    end
+end)

@@ -11,7 +11,27 @@
     <iconFilename>icon_sanity_saver.dds</iconFilename>
     <multiplayer supported="true" />
     <extraSourceFiles>
+        <sourceFile filename="UIHelper.lua" />
         <sourceFile filename="SanitySaverConfig.lua" />
+        <sourceFile filename="SanitySaverSettingsUI.lua" />
         <sourceFile filename="SanitySaver.lua" />
     </extraSourceFiles>
+
+    <l10n>
+        <text name="ss_setting_title">
+            <en>Sanity Saver</en>
+        </text>
+        <text name="ss_enabled_title">
+            <en>Autosave enabled</en>
+        </text>
+        <text name="ss_enabled_info">
+            <en>Turn off if you're testing a mod that might trash the world and don't want it autosaved.</en>
+        </text>
+        <text name="ss_saveIntervalMinutes_title">
+            <en>Save interval</en>
+        </text>
+        <text name="ss_saveIntervalMinutes_info">
+            <en>Hard ceiling: always saves after this long, no matter what. Also starts watching for a short AFK gap to sneak an earlier save into once 75% of this has passed.</en>
+        </text>
+    </l10n>
 </modDesc>

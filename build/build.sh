@@ -31,7 +31,7 @@ echo "=== sanity check xml files ==="
 find . -path ./build -prune -o -name '*.xml' -print0 | xargs -0 -n1 python3 -c 'import sys, xml.dom.minidom; xml.dom.minidom.parse(sys.argv[1])'
 
 echo "--> Copying production files to staging area..."
-for i in modDesc.xml SanitySaver.lua SanitySaverConfig.lua icon_sanity_saver.dds; do
+for i in modDesc.xml SanitySaver.lua SanitySaverConfig.lua SanitySaverSettingsUI.lua UIHelper.lua icon_sanity_saver.dds; do
   cp -r "$i" "$BUILD_DIR/$i"
 done
 

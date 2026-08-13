@@ -132,6 +132,7 @@ local function onMissionLoaded(mission, node)
     end
 
     SanitySaver.config = SanitySaverConfig.new()
+    SanitySaver.settingsUI = SanitySaverSettingsUI.new(SanitySaver.config)
 
     local saver = SanitySaver.new()
     SanitySaver.instance = saver
@@ -155,6 +156,24 @@ local function onMissionLoaded(mission, node)
 end
 
 Mission00.loadMission00Finished = Utils.appendedFunction(Mission00.loadMission00Finished, onMissionLoaded)
+
+-- InGameMenu.onMenuOpened, not loadMission00Finished/loadMap - the
+-- settings page's own GUI elements (gameSettingsLayout etc.) aren't
+-- guaranteed built that early. onMenuOpened only fires once the player
+-- actually opens the ESC menu, by which point everything's guaranteed
+-- built - same real, confirmed pattern FS25_ImmersiveWeathering's
+-- IWSettingsUI uses (pulled from FS25_AdditionalContracts's own
+-- UIGameSettings.lua originally). injectUiSettings() is idempotent
+-- (isInitialized guard), so appending this unconditionally on every menu
+-- open is safe - it only actually builds controls the first time.
+InGameMenu.onMenuOpened = Utils.appendedFunction(
+    InGameMenu.onMenuOpened,
+    function(...)
+        if SanitySaver.settingsUI ~= nil then
+            SanitySaver.settingsUI:injectUiSettings()
+        end
+    end
+)
 
 -- Fires for ANY completed save, not just ours - a manual pause-menu save
 -- or a quicksave hotkey should reset our timers too, same as if we'd

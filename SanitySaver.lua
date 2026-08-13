@@ -69,6 +69,18 @@ function SanitySaver:update(dt)
     end
 end
 
+function SanitySaver:onDayChanged()
+    local mission = g_currentMission
+    if mission == nil or mission.missionInfo == nil or not mission:getIsServer() then
+        return
+    end
+
+    mission:startSaveCurrentGame()
+    self.lastSaveTime = g_time
+    self.lastActivityTime = g_time
+    Logging.info("[SanitySaver] Day changed (slept) - autosaved.")
+end
+
 function SanitySaver:consoleCommandDebugSkipWarmup()
     self.lastSaveTime = g_time - SanitySaver.WARMUP
     self.lastActivityTime = g_time - SanitySaver.AFK_THRESHOLD
@@ -85,6 +97,13 @@ local function onMissionLoaded(mission, node)
     addConsoleCommand("sanitySaverDebugSkipWarmup",
         "Sanity Saver: skip straight past the 45min warmup so the AFK check fires immediately (testing only)",
         "consoleCommandDebugSkipWarmup", saver)
+
+    -- Sleeping jumps the in-game clock forward, same category of "about to
+    -- do something disruptive" as opening the save menu - a natural,
+    -- always-foreground save point (unlike the AFK/interval checks, this
+    -- one can't be starved by the window being minimized, since sleeping
+    -- is a deliberate action that requires the game to be focused).
+    g_messageCenter:subscribe(MessageType.DAY_CHANGED, saver.onDayChanged, saver)
 end
 
 Mission00.loadMission00Finished = Utils.appendedFunction(Mission00.loadMission00Finished, onMissionLoaded)

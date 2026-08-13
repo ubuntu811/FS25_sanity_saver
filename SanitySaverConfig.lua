@@ -22,7 +22,14 @@ function SanitySaverConfig.new()
     createFolder(self.baseDir)
     self.filePath = self.baseDir .. "config.xml"
 
-    self:load()
+    if fileExists(self.filePath) then
+        self:load()
+    else
+        -- Write the defaults immediately rather than waiting for the first
+        -- toggle/setInterval - otherwise the file (and what it defaults
+        -- to) is invisible until a console command happens to touch it.
+        self:save()
+    end
 
     return self
 end

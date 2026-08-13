@@ -31,8 +31,16 @@ echo "=== sanity check xml files ==="
 find . -path ./build -prune -o -name '*.xml' -print0 | xargs -0 -n1 python3 -c 'import sys, xml.dom.minidom; xml.dom.minidom.parse(sys.argv[1])'
 
 echo "--> Copying production files to staging area..."
-for i in modDesc.xml SanitySaver.lua SanitySaverConfig.lua SanitySaverSettingsUI.lua UIHelper.lua icon_sanity_saver.dds; do
-  cp -r "$i" "$BUILD_DIR/$i"
+# Existence-checked, not assumed - see FS25_whatAmILookingAt's own
+# AI_DEV_GUIDE.md gotcha: git doesn't track empty directories, so an
+# unconditionally-listed folder can pass locally and still fail a fresh
+# clone if it's ever empty.
+for i in modDesc.xml SanitySaver.lua SanitySaverConfig.lua SanitySaverSettingsUI.lua UIHelper.lua icon_sanity_saver.dds l10n/; do
+  if [ -e "$i" ]; then
+    cp -r "$i" "$BUILD_DIR/$i"
+  else
+    echo "    (Skipping missing/empty: $i)"
+  fi
 done
 
 # 3. Compile the production archive

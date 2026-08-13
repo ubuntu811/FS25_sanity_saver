@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<l10n>
+    <texts>
+        <text name="ss_setting_title" text="Sanity Saver"/>
+        <text name="ss_enabled_title" text="Autosave enabled"/>
+        <text name="ss_enabled_info" text="Turn off if you're testing a mod that might trash the world and don't want it autosaved."/>
+        <text name="ss_saveIntervalMinutes_title" text="Save interval"/>
+        <text name="ss_saveIntervalMinutes_info" text="Hard ceiling: always saves after this long, no matter what. Also starts watching for a short AFK gap to sneak an earlier save into once 75% of this has passed."/>
+    </texts>
+</l10n>

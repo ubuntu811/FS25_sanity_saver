@@ -17,21 +17,14 @@
         <sourceFile filename="SanitySaver.lua" />
     </extraSourceFiles>
 
-    <l10n>
-        <text name="ss_setting_title">
-            <en>Sanity Saver</en>
-        </text>
-        <text name="ss_enabled_title">
-            <en>Autosave enabled</en>
-        </text>
-        <text name="ss_enabled_info">
-            <en>Turn off if you're testing a mod that might trash the world and don't want it autosaved.</en>
-        </text>
-        <text name="ss_saveIntervalMinutes_title">
-            <en>Save interval</en>
-        </text>
-        <text name="ss_saveIntervalMinutes_info">
-            <en>Hard ceiling: always saves after this long, no matter what. Also starts watching for a short AFK gap to sneak an earlier save into once 75% of this has passed.</en>
-        </text>
-    </l10n>
+    <!-- filenamePrefix, not an inline <text> block - confirmed via
+         FS25_Hammer's own real, working l10n (l10n/l10n_en.xml,
+         flat text="..." attributes, not nested <en>). An inline
+         <l10n><text name="X"><en>Y</en></text></l10n> block is schema-valid
+         but doesn't feed g_i18n:getText() for arbitrary custom UI text
+         (settings labels, tooltips) - confirmed live: it rendered as
+         "MISSING 'ss_setting_title' IN L10N_EN.XML" in-game, and the
+         engine's own log printed zero warnings about it (it never even
+         tried to look there), unlike the real external-file mechanism. -->
+    <l10n filenamePrefix="l10n/l10n" />
 </modDesc>

@@ -10,13 +10,22 @@ Fixed autosave. Two tiers:
 Note: activity is tracked via keyboard/mouse events. A gamepad-only session
 won't reset the idle timer, so it just degrades to a plain SAVE_INTERVAL
 autosave for those players - still strictly better than never/menu-only.
+
+Config (enabled + the interval, see SanitySaverConfig.lua) is a
+persistent, cross-save mod preference, not per-savegame state - "I'm
+testing a mod that might trash the world, turn this off for a while" is
+a machine-wide call, not something tied to one save.
 ]]
 
 SanitySaver = {}
 local SanitySaver_mt = Class(SanitySaver)
 
-SanitySaver.SAVE_INTERVAL = 60 * 60 * 1000 -- always save after this long, regardless of activity
-SanitySaver.WARMUP = 45 * 60 * 1000 -- don't bother checking for AFK before this long since last save
+-- WARMUP is a fraction of the configured interval, not a separate
+-- absolute setting - e.g. a 60min interval starts the AFK-window watch at
+-- the 45min mark (0.75). Keeps the config surface to just "enabled" +
+-- "the timer" instead of two numbers that have to be kept sensibly
+-- related to each other.
+SanitySaver.WARMUP_FACTOR = 0.75
 SanitySaver.AFK_THRESHOLD = 60 * 1000 -- this much idle time counts as AFK
 
 function SanitySaver.new()
@@ -44,17 +53,24 @@ function SanitySaver:update(dt)
         return
     end
 
+    if not SanitySaver.config:isEnabled() then
+        return
+    end
+
     if g_gui:getIsGuiVisible() then
         self:registerActivity() -- being in a menu isn't AFK
         return
     end
 
+    local saveInterval = SanitySaver.config:getSaveIntervalMs()
+    local warmup = saveInterval * SanitySaver.WARMUP_FACTOR
+
     local sinceLastSave = g_time - self.lastSaveTime
     local shouldSave = false
 
-    if sinceLastSave >= SanitySaver.SAVE_INTERVAL then
+    if sinceLastSave >= saveInterval then
         shouldSave = true -- hit the hard ceiling
-    elseif sinceLastSave >= SanitySaver.WARMUP then
+    elseif sinceLastSave >= warmup then
         if g_time - self.lastActivityTime >= SanitySaver.AFK_THRESHOLD then
             shouldSave = true -- sneak a save into this idle moment
         end
@@ -75,6 +91,10 @@ function SanitySaver:onDayChanged()
         return
     end
 
+    if not SanitySaver.config:isEnabled() then
+        return
+    end
+
     mission:startSaveCurrentGame()
     self.lastSaveTime = g_time
     self.lastActivityTime = g_time
@@ -82,21 +102,49 @@ function SanitySaver:onDayChanged()
 end
 
 function SanitySaver:consoleCommandDebugSkipWarmup()
-    self.lastSaveTime = g_time - SanitySaver.WARMUP
+    local saveInterval = SanitySaver.config:getSaveIntervalMs()
+    self.lastSaveTime = g_time - (saveInterval * SanitySaver.WARMUP_FACTOR)
     self.lastActivityTime = g_time - SanitySaver.AFK_THRESHOLD
     Logging.info("[SanitySaver] Debug: warmup + AFK window skipped. Close any open menu and it should autosave on the next update.")
+end
+
+function SanitySaver:consoleCommandToggle()
+    local enabled = not SanitySaver.config:isEnabled()
+    SanitySaver.config:setEnabled(enabled)
+    Logging.info("[SanitySaver] %s", enabled and "Enabled." or "Disabled - won't autosave until re-enabled.")
+end
+
+function SanitySaver:consoleCommandSetInterval(minutesStr)
+    local minutes = tonumber(minutesStr)
+    if minutes == nil or minutes <= 0 then
+        Logging.info("[SanitySaver] Usage: sanitySaverSetInterval <minutes> (e.g. 60)")
+        return
+    end
+
+    SanitySaver.config:setSaveIntervalMinutes(minutes)
+    Logging.info("[SanitySaver] Save interval set to %d min (AFK-window watch starts at %d min).",
+        minutes, math.floor(minutes * SanitySaver.WARMUP_FACTOR))
 end
 
 local function onMissionLoaded(mission, node)
     if mission.cancelLoading then
         return
     end
+
+    SanitySaver.config = SanitySaverConfig.new()
+
     local saver = SanitySaver.new()
     SanitySaver.instance = saver
     addModEventListener(saver)
     addConsoleCommand("sanitySaverDebugSkipWarmup",
-        "Sanity Saver: skip straight past the 45min warmup so the AFK check fires immediately (testing only)",
+        "Sanity Saver: skip straight past the warmup so the AFK check fires immediately (testing only)",
         "consoleCommandDebugSkipWarmup", saver)
+    addConsoleCommand("sanitySaverToggle",
+        "Sanity Saver: enable/disable autosaving (persists across sessions)",
+        "consoleCommandToggle", saver)
+    addConsoleCommand("sanitySaverSetInterval",
+        "Sanity Saver: set the save interval in minutes, e.g. 'sanitySaverSetInterval 30' (persists across sessions)",
+        "consoleCommandSetInterval", saver)
 
     -- Sleeping jumps the in-game clock forward, same category of "about to
     -- do something disruptive" as opening the save menu - a natural,
@@ -110,10 +158,13 @@ Mission00.loadMission00Finished = Utils.appendedFunction(Mission00.loadMission00
 
 -- Fires for ANY completed save, not just ours - a manual pause-menu save
 -- or a quicksave hotkey should reset our timers too, same as if we'd
--- triggered it ourselves. Registered at file-load time (top level, not
--- inside onMissionLoaded) because SavegameController is a menu-system
--- singleton that exists before any mission is loaded - same pattern
--- FS25_PowerTools uses for its own quicksave feature.
+-- triggered it ourselves. Unconditional (not gated on config.enabled) -
+-- even while disabled, a real save happening should still update our
+-- bookkeeping, so re-enabling later doesn't think a save is overdue and
+-- fire immediately. Registered at file-load time (top level, not inside
+-- onMissionLoaded) because SavegameController is a menu-system singleton
+-- that exists before any mission is loaded - same pattern FS25_PowerTools
+-- uses for its own quicksave feature.
 SavegameController.onSaveComplete = Utils.appendedFunction(SavegameController.onSaveComplete, function(self, errorCode)
     if SanitySaver.instance ~= nil and errorCode == Savegame.ERROR_OK then
         SanitySaver.instance.lastSaveTime = g_time

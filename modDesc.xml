@@ -11,6 +11,7 @@
     <iconFilename>icon_sanity_saver.dds</iconFilename>
     <multiplayer supported="true" />
     <extraSourceFiles>
+        <sourceFile filename="SanitySaverConfig.lua" />
         <sourceFile filename="SanitySaver.lua" />
     </extraSourceFiles>
 </modDesc>

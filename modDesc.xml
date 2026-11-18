@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<modDesc descVersion="106">
+    <author>ubuntu811</author>
+    <version>1.0.0.0</version>
+    <title>
+        <en>Sanity Saver</en>
+    </title>
+    <description>
+        <en>Fixed autosave: forces a save every 60 minutes no matter what, but after 45 minutes without a save it starts watching for a ~60s AFK gap and sneaks a save in then instead of interrupting you.</en>
+    </description>
+    <iconFilename>icon_sanity_saver.dds</iconFilename>
+    <multiplayer supported="true" />
+    <extraSourceFiles>
+        <sourceFile filename="UIHelper.lua" />
+        <sourceFile filename="SanitySaverConfig.lua" />
+        <sourceFile filename="SanitySaverSettingsUI.lua" />
+        <sourceFile filename="SanitySaver.lua" />
+    </extraSourceFiles>
+
+    <!-- filenamePrefix, not an inline <text> block - confirmed via
+         FS25_Hammer's own real, working l10n (l10n/l10n_en.xml,
+         flat text="..." attributes, not nested <en>). An inline
+         <l10n><text name="X"><en>Y</en></text></l10n> block is schema-valid
+         but doesn't feed g_i18n:getText() for arbitrary custom UI text
+         (settings labels, tooltips) - confirmed live: it rendered as
+         "MISSING 'ss_setting_title' IN L10N_EN.XML" in-game, and the
+         engine's own log printed zero warnings about it (it never even
+         tried to look there), unlike the real external-file mechanism. -->
+    <l10n filenamePrefix="l10n/l10n" />
+</modDesc>
